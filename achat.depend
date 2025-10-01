@@ -1,0 +1,8 @@
+# depslib dependency file v1.0
+1759275127 source:c:\users\hp\desktop\achat\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<conio.h>
+	<time.h>
+
