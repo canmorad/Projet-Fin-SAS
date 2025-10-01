@@ -26,9 +26,11 @@ typedef struct{
     char *description ;
 }Produit;
 
-void menuPrincipal(Client *clients , int *nbClients);
-void menuProfil(Client *clients , int *nbClients);
-void afficherCatalogue(Produit *produits, int *nbProduits);
+void menuPrincipal(Produit *produits, int *nbProduits , Client *clients , int *nbClients);
+void menuProfil(Produit *produits, int *nbProduits , Client *clients , int *nbClients);
+void menuProduit(Produit *produits, int *nbProduits , Client *clients , int *nbClients);
+void menuSolde(Produit *produits, int *nbProduits ,Client *clients , int *nbClients);
+void afficherCatalogue(Produit *produits, int *nbProduits , Client *clients , int *nbClients);
 
 char *idClient = NULL;
 
@@ -94,7 +96,7 @@ void copieProduit(Produit *p1 , Produit *p2){
     strcpy(p1->description , p2->description);
 }
 
-void creerProfil(Client *clients , int *nbClients){
+void creerProfil(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     system("cls"); system("color f0");
     textbackground(7); textcolor(0);
 
@@ -117,7 +119,7 @@ void creerProfil(Client *clients , int *nbClients){
         gotoxy(35,25);   cprintf("La table est pleine !");
 
         getch();
-        menuProfil(clients , nbClients);
+        menuProfil(produits, nbProduits , clients , nbClients);
     }
 
     (clients+*nbClients)->idClient = malloc(10);
@@ -136,6 +138,7 @@ void creerProfil(Client *clients , int *nbClients){
         gotoxy(60,14); gets((clients+*nbClients)->nomUtilisateur);
         if(!estNomUtilisateurUnique(clients , *nbClients , (clients+*nbClients)->nomUtilisateur)){
            gotoxy(60,14);  printf("Ce username est deja pris!");
+           getch();
         }
     }while(!estNomUtilisateurUnique(clients , *nbClients , (clients+*nbClients)->nomUtilisateur));
 
@@ -144,6 +147,7 @@ void creerProfil(Client *clients , int *nbClients){
         gotoxy(60,16); gets((clients+*nbClients)->password);
         if(!estPasswordUnique(clients , *nbClients , (clients+*nbClients)->password)){
            gotoxy(60,16);  printf("Ce password est deja pris!");
+           getch();
         }
     }while(!estPasswordUnique(clients , *nbClients , (clients+*nbClients)->password));
 
@@ -163,7 +167,7 @@ void creerProfil(Client *clients , int *nbClients){
     gotoxy(35,25);   cprintf("Le compte creer avec succes !");
 
     getch();
-    menuProfil(clients , nbClients);
+    menuProfil(produits , nbProduits , clients , nbClients);
 }
 
  char *verifierConnexion(Client *clients , int nbClients , char *nomUtilisateur , char *password){
@@ -178,7 +182,7 @@ void creerProfil(Client *clients , int *nbClients){
     return NULL;
 }
 
-void login(Client *clients , int *nbClients){
+void login(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     char nomUtilisateur[50] , password[50];
     system("cls"); system("color f0");
     textbackground(7); textcolor(0);
@@ -205,22 +209,22 @@ void login(Client *clients , int *nbClients){
         gotoxy(45,17);   cprintf("Bienvenue !");
 
         getch();
-        menuProfil(clients , nbClients);
+        menuProfil(produits, nbProduits , clients , nbClients);
     }else{
         textbackground(4);
         gotoxy(45,17);   cprintf("Aucun client connecte !");
 
         getch();
-        menuProfil(clients , nbClients);
+        menuProfil(produits, nbProduits , clients , nbClients);
     }
 
 }
 
-void logout(Client *clients , int *nbClients){
+void logout(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     idClient = NULL;
 
     getch();
-    menuProfil(clients , nbClients);
+    menuProfil(produits, nbProduits , clients , nbClients);
 }
 
 int rechercherParID(Client *clients , int nbClients , char *idClient){
@@ -236,7 +240,7 @@ int rechercherParID(Client *clients , int nbClients , char *idClient){
     return -1;
 }
 
-void consulterProfil(Client *clients , int *nbClients){
+void consulterProfil(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     int indice;
 
     system("cls"); system("color f0");
@@ -276,10 +280,10 @@ void consulterProfil(Client *clients , int *nbClients){
     }
 
     getch();
-    menuProfil(clients , nbClients);
+    menuProfil(produits, nbProduits , clients , nbClients);
 }
 
-void modifierProfil(Client *clients , int *nbClients){
+void modifierProfil(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     int indice;
 
     system("cls"); system("color f0");
@@ -310,7 +314,7 @@ void modifierProfil(Client *clients , int *nbClients){
     }
 
     getch();
-    menuProfil(clients , nbClients);
+    menuProfil(produits, nbProduits , clients , nbClients);
 }
 
 void afficherProduit(Produit *produits, int indice){
@@ -321,7 +325,16 @@ void afficherProduit(Produit *produits, int indice){
     gotoxy(95,11+indice); printf("%d",(produits+indice)->stock);
 }
 
-void rechercherParNom(Produit *produits, int *nbProduits){
+int rechercherIdProduit(Produit *produits, int nbProduits , char *idProduit){
+    int i;
+    for(i=0 ; i<nbProduits ; i++){
+        if(strcmp( (produits+i)->idProduit , idProduit) == 0)
+            return i;
+    }
+    return -1;
+}
+
+void rechercherParNom(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     int i;
     int existe=0;
     char nom[50];
@@ -342,24 +355,42 @@ void rechercherParNom(Produit *produits, int *nbProduits){
     gotoxy(80,9); cprintf("Prix");
     gotoxy(95,9); cprintf("Stock");
 
+    if(*nbProduits == 0){
+        textbackground(4);
+        gotoxy(35,15);   cprintf("Accun produit enregistre !");
+
+        getch();
+        menuProduit(produits, nbProduits, clients , nbClients);
+    }
+
     gotoxy(60,7); gets(nom);
 
     for(i=0 ; i<*nbProduits ; i++){
         if(strcmp((produits+i)->nom , nom) == 0){
-            afficherProduit(produits, i);
+            gotoxy(10,11); printf("%s",(produits+i)->idProduit);
+            gotoxy(25,11); printf("%s",(produits+i)->nom);
+            gotoxy(55,11); printf("%s",(produits+i)->categorie);
+            gotoxy(80,11); printf("%.2f",(produits+i)->prix);
+            gotoxy(95,11); printf("%d",(produits+i)->stock);
+            //afficherProduit(produits, i);
             existe = 1;
+            break;
         }
     }
 
     if(existe == 0){
         textbackground(4);
         gotoxy(35,15);   cprintf("Accun produit enregistre !");
+
+        getch();
+        menuProduit(produits, nbProduits , clients , nbClients);
     }
 
     getch();
+    menuProduit(produits, nbProduits , clients , nbClients);
 }
 
-void trierParPrix(Produit *produits, int *nbProduits){
+void trierParPrix(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     int i , echange;
     Produit temp;
     alloueProduit(&temp);
@@ -376,10 +407,30 @@ void trierParPrix(Produit *produits, int *nbProduits){
         }
     }while(echange == 1);
 
-    afficherCatalogue(produits, nbProduits);
+    afficherCatalogue(produits, nbProduits , clients , nbClients);
 }
 
-void rechercherParCategorie(Produit *produits, int *nbProduits){
+void trierParNom(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
+    int i , echange;
+    Produit temp;
+    alloueProduit(&temp);
+
+    do{
+        echange = 0;
+        for(i=0 ; i<*nbProduits-1 ; i++){
+            if( strcmp( (produits+i)->nom , (produits+i+1)->nom ) >0 ){
+                copieProduit(&temp , produits+i);
+                copieProduit(produits+i , produits+i+1);
+                copieProduit(produits+i+1 , &temp);
+                echange = 1;
+            }
+        }
+    }while(echange == 1);
+
+    afficherCatalogue(produits, nbProduits , clients , nbClients);
+}
+
+void rechercherParCategorie(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     int i;
     int existe=0;
     char categorie[50];
@@ -400,6 +451,14 @@ void rechercherParCategorie(Produit *produits, int *nbProduits){
     gotoxy(80,9); cprintf("Prix");
     gotoxy(95,9); cprintf("Stock");
 
+    if(*nbProduits == 0){
+        textbackground(4);
+        gotoxy(35,15);   cprintf("Accun produit enregistre !");
+
+        getch();
+        menuProduit(produits, nbProduits, clients , nbClients);
+    }
+
     gotoxy(60,7); gets(categorie);
 
     for(i=0 ; i<*nbProduits ; i++){
@@ -412,12 +471,13 @@ void rechercherParCategorie(Produit *produits, int *nbProduits){
     if(existe == 0){
         textbackground(4);
         gotoxy(35,15);   cprintf("Accun produit enregistre !");
-    }
 
+    }
     getch();
+    menuProduit(produits, nbProduits, clients , nbClients);
 }
 
-void afficherCatalogue(Produit *produits, int *nbProduits){
+void afficherCatalogue(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     int i ;
     system("cls"); system("color f0");
     textbackground(7); textcolor(0);
@@ -438,7 +498,7 @@ void afficherCatalogue(Produit *produits, int *nbProduits){
         gotoxy(35,15);   cprintf("Accun produit enregistre !");
 
         getch();
-        return ;
+        menuProduit(produits, nbProduits , clients , nbClients);
     }
 
     for(i=0 ; i<*nbProduits ; i++){
@@ -446,9 +506,228 @@ void afficherCatalogue(Produit *produits, int *nbProduits){
     }
 
     getch();
+    menuProduit(produits, nbProduits , clients , nbClients);
 }
 
-void menuProfil(Client *clients , int *nbClients){
+void afficherDetailsProduit(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
+    int  i , indice;
+    int existe=0;
+    char idProduit[10];
+
+    system("cls"); system("color f0");
+    textbackground(7); textcolor(0);
+
+    gotoxy(25,3); cprintf("                                                                        ");
+    gotoxy(25,4); cprintf("                          Details produit                               ");
+    gotoxy(25,5); cprintf("                                                                        ");
+
+    gotoxy(35,7); printf("Numero produit    : ");
+
+    textbackground(4);
+
+    gotoxy(35,10); printf("Nom            :");
+    gotoxy(35,12); printf("Categorie      :");
+    gotoxy(35,14); printf("Prix           :");
+    gotoxy(35,16); printf("Stock          :");
+    gotoxy(35,18); printf("description    :");
+
+    if(*nbProduits == 0){
+        textbackground(4);
+        gotoxy(35,25);   cprintf("Accun produit enregistre !");
+
+        getch();
+        menuProduit(produits, nbProduits , clients , nbClients);
+    }
+
+    gotoxy(60,7); gets(idProduit);
+
+    indice = rechercherIdProduit(produits, *nbProduits , idProduit);
+
+    if(indice != -1){
+
+        gotoxy(55,10); puts((produits+indice)->nom);
+        gotoxy(55,12); puts((produits+indice)->categorie);
+        gotoxy(55,14); printf("%.2f",((produits+indice)->prix));
+        gotoxy(55,16); printf("%d",((produits+indice)->stock));
+        gotoxy(55,18); puts((produits+indice)->description );
+    }else{
+        textbackground(4);
+        gotoxy(35,25);   cprintf("Accun produit enregistre !");
+    }
+
+    getch();
+    menuProduit(produits, nbProduits , clients , nbClients);
+}
+
+void consulterSolde(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
+    int indice;
+
+    system("cls"); system("color f0");
+    textbackground(7); textcolor(0);
+
+    gotoxy(25,3); cprintf("                                                                        ");
+    gotoxy(25,4); cprintf("                          Consultation du solde                         ");
+    gotoxy(25,5); cprintf("                                                                        ");
+
+    gotoxy(25,27); cprintf("                                                                        ");
+    gotoxy(25,28); cprintf("                                                                        ");
+    gotoxy(25,29); cprintf("                                                                        ");
+
+    gotoxy(35,7); cprintf(" Consulter solde ");
+    gotoxy(35,10);  printf("Nom               :");
+    gotoxy(35,12);  printf("Solde             :");
+
+
+    indice = rechercherParID(clients , *nbClients , idClient);
+    if(indice != -1){
+        gotoxy(60,10);  printf("%s  %s",(clients+indice)->prenom,(clients+indice)->nom);
+        gotoxy(60,12);  printf("%.2f",(clients+indice)->solde);
+
+    }else{
+        textbackground(4);
+        gotoxy(35,25);   cprintf("Aucun client connecte !");
+
+    }
+
+    getch();
+    menuSolde(produits, nbProduits , clients , nbClients);
+}
+
+int verifierSolde(Client *clients , int *nbClients , float prixTotale){
+    int indice = rechercherParID(clients , *nbClients , idClient);
+
+    if((clients+indice)->solde >= prixTotale)
+        return 1;
+    else
+        return 0;
+}
+
+int verifierStock(Produit *produit , int nbProd){
+
+    if(produit->stock >= nbProd)
+        return 1;
+    else
+        return 0;
+}
+
+void achatProduit(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
+    int i;
+    int existe=0 , indice;
+    char id[50];
+    int nbProd;
+    float prixTotale =0.0;
+
+    system("cls"); system("color f0");
+    textbackground(7); textcolor(0);
+
+    gotoxy(25,3); cprintf("                                                                        ");
+    gotoxy(25,4); cprintf("                          Selection de produit                          ");
+    gotoxy(25,5); cprintf("                                                                        ");
+
+    gotoxy(35,7); printf("Numero Produit      : ");
+
+    textbackground(4);
+    gotoxy(10,9); cprintf("ID");
+    gotoxy(23,9); cprintf("Nom");
+    gotoxy(50,9); cprintf("Prix");
+    gotoxy(80,9); cprintf("Stock");
+
+    if(*nbProduits == 0){
+        textbackground(4);
+        gotoxy(35,15);   cprintf("Accun produit enregistre !");
+
+        getch();
+        menuProduit(produits, nbProduits, clients , nbClients);
+    }
+
+    gotoxy(60,7); scanf("%s",id);
+
+    indice = rechercherIdProduit(produits , *nbProduits , id);
+    if(idClient != NULL){
+        if(indice != -1){
+            gotoxy(10,11); printf("%s",(produits+i)->idProduit);
+            gotoxy(25,11); printf("%s",(produits+i)->nom);
+            gotoxy(50,11); printf("%.2f",(produits+i)->prix);
+            gotoxy(80,11); printf("%d",(produits+i)->stock);
+            do{
+                gotoxy(35 , 13); printf("Entrez le nombre de produit : ");
+                gotoxy(65 , 13); printf("%d",&nbProd);
+            }while(nbProd <= 0);
+
+            prixTotale = ((produits+i)->prix) * nbProd;
+
+            if(verifierSolde(clients , nbClients , prixTotale)){
+                if(verifierStock(produits+i , nbProd)){
+                    int indice = rechercherParID(clients , *nbClients , idClient);
+                    (clients+indice)->solde -= prixTotale;
+                    (produits+i)->stock -= nbProd;
+
+                }else{
+                    textbackground(4);
+                    gotoxy(35,15);   cprintf("Ce produit n'est plus en stock !");
+                }
+            }else{
+                textbackground(4);
+                gotoxy(35,15);   cprintf("Votre solde est insuffisant pour acheter ce produit !");
+            }
+
+
+
+       }else{
+            textbackground(4);
+            gotoxy(35,15);   cprintf("Accun produit enregistre !");
+
+            getch();
+            menuPrincipal(produits, nbProduits , clients , nbClients);
+        }
+    }else{
+        textbackground(4);
+        gotoxy(35,25);   cprintf("Aucun client connecte !");
+
+    }
+
+    getch();
+    menuPrincipal(produits, nbProduits , clients , nbClients);
+}
+
+void depotArgent(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
+    int indice;
+    float solde;
+
+    system("cls"); system("color f0");
+    textbackground(7); textcolor(0);
+
+    gotoxy(25,3); cprintf("                                                                        ");
+    gotoxy(25,4); cprintf("                          Depot d'argent                                ");
+    gotoxy(25,5); cprintf("                                                                        ");
+
+    gotoxy(25,27); cprintf("                                                                        ");
+    gotoxy(25,28); cprintf("                                                                        ");
+    gotoxy(25,29); cprintf("                                                                        ");
+
+    gotoxy(35,7); cprintf(" Ajouter solde ");
+    gotoxy(35,10);  printf("Solde                :");
+
+
+    indice = rechercherParID(clients , *nbClients , idClient);
+    if(indice != -1){
+        gotoxy(60,10);  scanf("%f",&solde);
+        (clients+indice)->solde += solde;
+
+        textbackground(4);
+        gotoxy(35,25);   cprintf("Ensuite, le depot de l'argent a ete effectue avec succes !");
+
+    }else{
+        textbackground(4);
+        gotoxy(35,25);   cprintf("Aucun client connecte !");
+
+    }
+
+    getch();
+    menuSolde(produits, nbProduits , clients , nbClients);
+}
+
+void menuProfil(Produit *produits, int *nbProduits ,Client *clients , int *nbClients){
     char choix;
 
     system("cls"); system("color f0");
@@ -482,16 +761,48 @@ void menuProfil(Client *clients , int *nbClients){
 
     switch(choix){
 
-        case '1' : creerProfil(clients , nbClients); break;
-        case '2' : modifierProfil(clients , nbClients); break;
-        case '3' : consulterProfil(clients , nbClients); break;
-        case '4' : login(clients , nbClients); break;
-        case '5' : logout(clients , nbClients); break;
-        case '0' : menuPrincipal(clients , nbClients); break;
+        case '1' : creerProfil(produits, nbProduits , clients , nbClients); break;
+        case '2' : modifierProfil(produits, nbProduits , clients , nbClients); break;
+        case '3' : consulterProfil(produits, nbProduits , clients , nbClients); break;
+        case '4' : login(produits, nbProduits , clients , nbClients); break;
+        case '5' : logout(produits, nbProduits , clients , nbClients); break;
+        case '0' : menuPrincipal(produits, nbProduits , clients , nbClients); break;
     }
 }
 
-void menuProduit(Client *clients , int *nbClients){
+void menuSolde(Produit *produits, int *nbProduits ,Client *clients , int *nbClients){
+    char choix;
+
+    system("cls"); system("color f0");
+    textbackground(4); textcolor(0);
+
+    gotoxy(25,3); cprintf("                                                                        ");
+    gotoxy(25,4); cprintf("                           Gestion du Solde Virtuel                     ");
+    gotoxy(25,5); cprintf("                                                                        ");
+
+    textbackground(7); textcolor(2);
+    gotoxy(35,7);    cprintf("                                                     ");
+    gotoxy(35,8);    cprintf("             1- Consultation du solde                 ");
+    gotoxy(35,9);    cprintf("                                                     ");
+    gotoxy(35,10);   cprintf("             2- Depot d'argent                       ");
+    gotoxy(35,11);   cprintf("                                                     ");
+    gotoxy(35,12);   cprintf("             0- Retour menu Principal                ");
+    gotoxy(35,13);   cprintf("                                                     ");
+
+    do{
+        gotoxy(35,22);   printf("Entrez votre choix : ");
+        choix = getch();
+    }while(choix!='1' && choix!='2' && choix!='0');
+
+    switch(choix){
+
+        case '1' : consulterSolde(produits, nbProduits , clients , nbClients); break;
+        case '2' : depotArgent(produits, nbProduits , clients , nbClients); break;
+        case '0' : menuPrincipal(produits, nbProduits , clients , nbClients); break;
+    }
+}
+
+void menuProduit(Produit *produits, int *nbProduits , Client *clients , int *nbClients){
     char choix;
 
     system("cls"); system("color f0");
@@ -505,38 +816,39 @@ void menuProduit(Client *clients , int *nbClients){
     gotoxy(35,7);    cprintf("                                                     ");
     gotoxy(35,8);    cprintf("             1- Affichage catalogue                  ");
     gotoxy(35,9);    cprintf("                                                     ");
-    gotoxy(35,10);   cprintf("             2- Recherche produits                   ");
+    gotoxy(35,10);   cprintf("             2- Recherche produits par nom           ");
     gotoxy(35,11);   cprintf("                                                     ");
-    gotoxy(35,12);   cprintf("             3- Tri des produits                     ");
+    gotoxy(35,12);   cprintf("             3- Recherche produits par categorie     ");
     gotoxy(35,13);   cprintf("                                                     ");
-    gotoxy(35,14);   cprintf("             4- Détails produit                      ");
+    gotoxy(35,14);   cprintf("             4- Tri des produits par prix            ");
     gotoxy(35,15);   cprintf("                                                     ");
-    gotoxy(35,16);   cprintf("             5- Produits prédéfinis                  ");
+    gotoxy(35,16);   cprintf("             5- Tri des produits par nom             ");
     gotoxy(35,17);   cprintf("                                                     ");
-    gotoxy(35,18);   cprintf("             0- Retour menu Principal                ");
+    gotoxy(35,18);   cprintf("             6- Details produit                      ");
     gotoxy(35,19);   cprintf("                                                     ");
-
-
+    gotoxy(35,20);   cprintf("             0- Retour menu Principal                ");
+    gotoxy(35,21);   cprintf("                                                     ");
 
     do{
-        gotoxy(35,22);   printf("Entrez votre choix : ");
+        gotoxy(35,23);   printf("Entrez votre choix : ");
         choix = getch();
-    }while(choix!='1' && choix!='2' && choix!='3' && choix!='4' && choix!='5' && choix!='0');
+    }while(choix!='1' && choix!='2' && choix!='3' && choix!='4' && choix!='5' && choix!='6' && choix!='0');
 
     switch(choix){
 
-        case '1' : menuProfil(clients , nbClients); break;
-        case '2' : break;
-        case '3' : break;
-        case '4' : break;
-        case '5' : break;
-        case '0' :  exit(0); break;
+        case '1' : afficherCatalogue(produits, nbProduits , clients , nbClients); break;
+        case '2' : rechercherParNom(produits, nbProduits , clients , nbClients); break;
+        case '3' : rechercherParCategorie(produits, nbProduits , clients , nbClients); break;
+        case '4' : trierParPrix(produits, nbProduits, clients , nbClients); break;
+        case '5' : trierParNom(produits, nbProduits, clients , nbClients); break;
+        case '6' : afficherDetailsProduit(produits, nbProduits , clients , nbClients); break;
+        case '0' : menuPrincipal(produits, nbProduits , clients , nbClients); break;
     }
 
 }
 
 
-void menuPrincipal(Client *clients , int *nbClients){
+void menuPrincipal(Produit *produits, int *nbProduits ,Client *clients , int *nbClients){
     char choix;
 
     system("cls"); system("color f0");
@@ -570,10 +882,10 @@ void menuPrincipal(Client *clients , int *nbClients){
 
     switch(choix){
 
-        case '1' : menuProfil(clients , nbClients); break;
-        case '2' : break;
-        case '3' : break;
-        case '4' : break;
+        case '1' : menuProfil(produits, nbProduits , clients , nbClients); break;
+        case '2' : menuSolde(produits, nbProduits , clients , nbClients); break;
+        case '3' : menuProduit(produits, nbProduits , clients , nbClients); break;
+        case '4' : achatProduit(produits, nbProduits , clients , nbClients); break;
         case '5' : break;
         case '0' :  exit(0); break;
     }
@@ -804,6 +1116,13 @@ int main(){
 
     //rechercherParNom(produits , &nbProduits);
 
-    trierParPrix(produits, &nbProduits);
+   // trierParPrix(produits, &nbProduits);
+   // trierParNom(produits, &nbProduits);
+
+    //afficherDetailsProduit(produits, &nbProduits);
+    menuPrincipal(produits, &nbProduits, clients , &nbClients);
+
+    //menuProduit(produits, &nbProduits, clients , &nbClients);
+
     return 0;
 }
