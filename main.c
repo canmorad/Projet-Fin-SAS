@@ -39,8 +39,7 @@ typedef struct{
 }LigneCommande;
 
 // Pointeur global pour stocker l'ID du client connecté
-char *idClient = NULL;
-
+char *clientConnecte = NULL;
 
 void menuPrincipal(Produit *produits, int *nbProduits , Client *clients , int *nbClients ,
                    LigneCommande *lignesCommande , int *nbLignesCommande);
@@ -69,10 +68,37 @@ void genererIdProduit(char *idProduit , int compteur){
     sprintf(idProduit , "P%03d" , compteur);
 }
 
+//Supprime tous les espaces d'une chaîne et retourne une nouvelle chaîne sans espaces
+char *supprimerEspaces(char *text){
+    int i , j=0;
+    char *temp = malloc(strlen(text)+1);
+    for(i=0 ; text[i]!='\0' ; i++){
+        if(text[i] != ' '){
+            temp[j++] = text[i];
+        }
+    }
+    temp[j] = '\0';
+    return temp;
+}
+
+int estChaine(char *text){
+    int i;
+    for(i=0 ; text[i] != '\0' ; i++){
+        if(!(text[i]>='a' && text[i]<='z') && !(text[i]>='A' && text[i]<='Z'))
+            return 0;
+    }
+    return 1;
+}
+
 // Génère automatiquement l'email du client à partir du nom et prénom
 void genererEmail(char *nom , char *prenom , char *email){
+    char *p = supprimerEspaces(prenom);
+    char *n = supprimerEspaces(nom);
 
-    sprintf(email , "%s.%s@email.com" , prenom,nom);
+    sprintf(email , "%s.%s@email.com" , p,n);
+
+    free(p);
+    free(n);
 }
 
 // Génère la date actuelle au format JJ/MM/AAAA
@@ -109,6 +135,18 @@ void alloueProduit(Produit *produit){
     produit->nom  = malloc(50);
     produit->categorie  = malloc(50);
     produit->description  = malloc(100);
+}
+
+// Alloue dynamiquement la mémoire nécessaire pour les champs d'un client
+
+void alloueClient(Client *client){
+    client->idClient = malloc(10);
+    client->nom = malloc(50);
+    client->prenom = malloc(50);
+    client->email = malloc(50);
+    client->dateInscription = malloc(20);
+    client->nomUtilisateur  = malloc(50);
+    client->password = malloc(50);
 }
 
 // Copie toutes les informations d'un produit p2 vers un produit p1
@@ -149,20 +187,31 @@ void creerProfil(Produit *produits, int *nbProduits , Client *clients , int *nbC
         menuProfil(produits, nbProduits , clients , nbClients , lignesCommande , nbLignesCommande);
     }
 
-    (clients+*nbClients)->idClient = malloc(10);
-    (clients+*nbClients)->nom = malloc(50);
-    (clients+*nbClients)->prenom = malloc(50);
-    (clients+*nbClients)->email = malloc(50);
-    (clients+*nbClients)->dateInscription = malloc(20);
-    (clients+*nbClients)->nomUtilisateur  = malloc(50);
-    (clients+*nbClients)->password = malloc(50);
+    alloueClient(clients+*nbClients);
 
-    gotoxy(60,10); gets((clients+*nbClients)->prenom);
-    gotoxy(60,12); gets((clients+*nbClients)->nom);
+    do{
+        gotoxy(60,10);  printf("                                       ");
+        gotoxy(60,10); gets((clients+*nbClients)->prenom);
+
+        if(!estChaine((clients+*nbClients)->prenom)){
+           gotoxy(60,10);  printf("Prenom invalide !");
+           getch();
+        }
+    }while(!estChaine((clients+*nbClients)->prenom));
+
+    do{
+        gotoxy(60,12);  printf("                                       ");
+        gotoxy(60,12); gets((clients+*nbClients)->nom);
+
+        if(!estChaine((clients+*nbClients)->nom)){
+           gotoxy(60,12);  printf("Nom invalide !");
+           getch();
+        }
+    }while(!estChaine((clients+*nbClients)->nom));
 
     do{
         gotoxy(60,14);  printf("                                       ");
-        gotoxy(60,14); scanf("%[^\n]", (clients+*nbClients)->nomUtilisateur);
+        gotoxy(60,14); gets((clients+*nbClients)->nomUtilisateur);
         if(!estNomUtilisateurUnique(clients , *nbClients , (clients+*nbClients)->nomUtilisateur)){
            gotoxy(60,14);  printf("Ce username est deja pris!");
            getch();
@@ -171,7 +220,7 @@ void creerProfil(Produit *produits, int *nbProduits , Client *clients , int *nbC
 
     do{
         gotoxy(60,16);  printf("                                        ");
-        gotoxy(60,16); scanf("%[^\n]", (clients+*nbClients)->password);
+        gotoxy(60,16); gets((clients+*nbClients)->password);
         if(!estPasswordUnique(clients , *nbClients , (clients+*nbClients)->password)){
            gotoxy(60,16);  printf("Ce password est deja pris!");
            getch();
@@ -209,6 +258,7 @@ char *verifierConnexion(Client *clients , int nbClients , char *nomUtilisateur ,
 }
 
 // Permet à un client de se connecter
+
 void login(Produit *produits, int *nbProduits , Client *clients , int *nbClients ,
            LigneCommande *lignesCommande , int *nbLignesCommande){
 
@@ -231,13 +281,14 @@ void login(Produit *produits, int *nbProduits , Client *clients , int *nbClients
     gotoxy(60,10);  gets(nomUtilisateur);
     gotoxy(60,13);  gets(password);
 
-    idClient = verifierConnexion(clients , *nbClients , nomUtilisateur , password);
+    clientConnecte = verifierConnexion(clients , *nbClients , nomUtilisateur , password);
 
-    if(idClient != NULL){
-        textbackground(4);
+    if(clientConnecte != NULL){
+        textbackground(2);
         gotoxy(45,17);   cprintf("Bienvenue !");
 
     }else{
+
         textbackground(4);
         gotoxy(45,17);   cprintf("Aucun client connecte !");
 
@@ -261,8 +312,8 @@ void logout(Produit *produits, int *nbProduits , Client *clients , int *nbClient
     gotoxy(25,28); cprintf("                                                                        ");
     gotoxy(25,29); cprintf("                                                                        ");
 
-    if(idClient != NULL){
-        idClient = NULL  ;
+    if(clientConnecte != NULL){
+        clientConnecte = NULL  ;
 
         textbackground(2);
         gotoxy(35,25);   cprintf("Deconnectez-vous ensuite avec succes !");
@@ -315,7 +366,7 @@ void consulterProfil(Produit *produits, int *nbProduits , Client *clients , int 
     gotoxy(35,20);  printf("Solde               :");
     gotoxy(35,22);  printf("Date inscription    :");
 
-    indice = rechercherParID(clients , *nbClients , idClient);
+    indice = rechercherParID(clients , *nbClients , clientConnecte);
     if(indice != -1){
         gotoxy(60,10);  printf("%s",(clients+indice)->nom);
         gotoxy(60,12);  printf("%s",(clients+indice)->prenom);
@@ -356,8 +407,8 @@ void modifierProfil(Produit *produits, int *nbProduits , Client *clients , int *
     gotoxy(35,10);  printf("Nom                 :");
     gotoxy(35,12);  printf("Prenom              :");
 
-    if(idClient != NULL){
-        indice = rechercherParID(clients , *nbClients , idClient);
+    if(clientConnecte != NULL){
+        indice = rechercherParID(clients , *nbClients , clientConnecte);
         if(indice != -1){
             gotoxy(60,10);  gets((clients+indice)->nom);
             gotoxy(60,12);  gets((clients+indice)->prenom);
@@ -401,7 +452,7 @@ int rechercherIdProduit(Produit *produits, int nbProduits , char *idProduit){
 // Recherche un produit par son nom et affiche ses informations
 void rechercherParNom(Produit *produits, int *nbProduits , Client *clients , int *nbClients ,
                       LigneCommande *lignesCommande , int *nbLignesCommande){
-    int i;
+    int i , j=0;
     int existe=0;
     char nom[50];
 
@@ -433,11 +484,12 @@ void rechercherParNom(Produit *produits, int *nbProduits , Client *clients , int
 
     for(i=0 ; i<*nbProduits ; i++){
         if(strcmp((produits+i)->nom , nom) == 0){
-            gotoxy(10,11); printf("%s",(produits+i)->idProduit);
-            gotoxy(25,11); printf("%s",(produits+i)->nom);
-            gotoxy(55,11); printf("%s",(produits+i)->categorie);
-            gotoxy(80,11); printf("%.2f",(produits+i)->prix);
-            gotoxy(95,11); printf("%d",(produits+i)->stock);
+            gotoxy(10,11+j); printf("%s",(produits+i)->idProduit);
+            gotoxy(25,11+j); printf("%s",(produits+i)->nom);
+            gotoxy(55,11+j); printf("%s",(produits+i)->categorie);
+            gotoxy(80,11+j); printf("%.2f",(produits+i)->prix);
+            gotoxy(95,11+j); printf("%d",(produits+i)->stock);
+            j++;
             existe = 1;
             break;
         }
@@ -504,7 +556,7 @@ void trierParNom(Produit *produits, int *nbProduits , Client *clients , int *nbC
 // Recherche les produits par catégorie et les affiche
 void rechercherParCategorie(Produit *produits, int *nbProduits , Client *clients , int *nbClients ,
                             LigneCommande *lignesCommande , int *nbLignesCommande){
-    int i;
+    int i , j=0;
     int existe=0;
     char categorie[50];
 
@@ -515,7 +567,7 @@ void rechercherParCategorie(Produit *produits, int *nbProduits , Client *clients
     gotoxy(25,4); cprintf("                          Recherche produits                            ");
     gotoxy(25,5); cprintf("                                                                        ");
 
-    gotoxy(35,7); printf("Categorie                : ");
+    gotoxy(35,7); printf("Categorie         : ");
 
     textbackground(4);
     gotoxy(10,9); cprintf("ID");
@@ -536,7 +588,12 @@ void rechercherParCategorie(Produit *produits, int *nbProduits , Client *clients
 
     for(i=0 ; i<*nbProduits ; i++){
         if(strcmp((produits+i)->categorie , categorie) == 0){
-            afficherProduit(produits, i);
+            gotoxy(10,11+j); printf("%s",(produits+i)->idProduit);
+            gotoxy(25,11+j); printf("%s",(produits+i)->nom);
+            gotoxy(55,11+j); printf("%s",(produits+i)->categorie);
+            gotoxy(80,11+j); printf("%.2f",(produits+i)->prix);
+            gotoxy(95,11+j); printf("%d",(produits+i)->stock);
+            j++;
             existe = 1;
         }
     }
@@ -660,7 +717,7 @@ void consulterSolde(Produit *produits, int *nbProduits , Client *clients , int *
     gotoxy(35,12);  printf("Solde             :");
 
 
-    indice = rechercherParID(clients , *nbClients , idClient);
+    indice = rechercherParID(clients , *nbClients , clientConnecte);
     if(indice != -1){
         gotoxy(60,10);  printf("%s  %s",(clients+indice)->prenom,(clients+indice)->nom);
         gotoxy(60,12);  printf("%.2f",(clients+indice)->solde);
@@ -677,7 +734,7 @@ void consulterSolde(Produit *produits, int *nbProduits , Client *clients , int *
 
 // Vérifie si le client connecté a assez de solde pour un achat
 int verifierSolde(Client *clients , int *nbClients , float prixTotale){
-    int indice = rechercherParID(clients , *nbClients , idClient);
+    int indice = rechercherParID(clients , *nbClients , clientConnecte);
 
     if((clients+indice)->solde >= prixTotale)
         return 1;
@@ -729,7 +786,7 @@ void achatProduit(Produit *produits, int *nbProduits , Client *clients , int *nb
 
     gotoxy(60,7); scanf("%s",id);
 
-    if(idClient != NULL){
+    if(clientConnecte != NULL){
         indice = rechercherIdProduit(produits , *nbProduits , id);
         if(indice != -1){
             gotoxy(10,11); printf("%s",(produits+indice)->idProduit);
@@ -746,7 +803,7 @@ void achatProduit(Produit *produits, int *nbProduits , Client *clients , int *nb
             if(verifierSolde(clients , nbClients , prixTotale)){
                 if(verifierStock(produits+indice , nbProd)){
 
-                    int j = rechercherParID(clients , *nbClients , idClient);
+                    int j = rechercherParID(clients , *nbClients , clientConnecte);
 
                     (clients+j)->solde -= prixTotale;
                     (produits+indice)->stock -= nbProd;
@@ -755,7 +812,7 @@ void achatProduit(Produit *produits, int *nbProduits , Client *clients , int *nb
                     (lignesCommande+*nbLignesCommande)->noProduit = malloc(10);
                     (lignesCommande+*nbLignesCommande)->dateAchat = malloc(10);
 
-                    strcpy((lignesCommande+*nbLignesCommande)->noClient , idClient);
+                    strcpy((lignesCommande+*nbLignesCommande)->noClient , clientConnecte);
                     strcpy((lignesCommande+*nbLignesCommande)->noProduit  , (produits+indice)->idProduit);
                     genererDate((lignesCommande+*nbLignesCommande)->dateAchat );
 
@@ -815,7 +872,7 @@ void depotArgent(Produit *produits, int *nbProduits , Client *clients , int *nbC
     gotoxy(35,10);  printf("Solde                :");
 
 
-    indice = rechercherParID(clients , *nbClients , idClient);
+    indice = rechercherParID(clients , *nbClients , clientConnecte);
     if(indice != -1){
         gotoxy(60,10);  scanf("%f",&solde);
         (clients+indice)->solde += solde;
@@ -1290,6 +1347,7 @@ void initialiserProduits(Produit *produits, int *nbProduits){
 
 
 int main(){
+
     Client *clients = malloc(MAX_CLIENTS*sizeof(Client));
     int nbClients = 0;
 
@@ -1301,7 +1359,8 @@ int main(){
 
     initialiserProduits(produits, &nbProduits);
 
-    menuPrincipal(produits, &nbProduits, clients , &nbClients , lignesCommande , &nblignesCommande);
+
+   menuPrincipal(produits, &nbProduits, clients , &nbClients , lignesCommande , &nblignesCommande);
 
 
     return 0;
